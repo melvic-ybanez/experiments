@@ -4,8 +4,8 @@ import java.time.format.DateTimeFormatter
 import java.time.{DayOfWeek, LocalDate}
 import scala.annotation.tailrec
 
-object DateUtils {
-  def countSundays(from: String, to: String): Int = {
+object Sundays {
+  def between(from: String, to: String): Int = {
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     val fromDate = LocalDate.parse(from, formatter)
     val toDate = LocalDate.parse(to, formatter)
