@@ -33,9 +33,14 @@ object EmailParser {
 
   def ipAddress[_: P]: P[String] = P("[" ~ (ipv4 | ipv6) ~ "]")
 
-  def email[_: P]: P[String] = P(local ~ "@" ~ (domain | ipAddress) ~ End).!
+  def email[_: P]: P[Email] = P(local ~ "@" ~ (domain | ipAddress) ~ End).map { case (local, domain) =>
+    Email(local, domain)
+  }
 
-  def parseEmail(emailString: String): Parsed[String] = parse(emailString, email(_))
+  def parseEmail(rawEmail: String): Parsed[Email] = parse(rawEmail, email(_))
+
+  def parseEmailToEither(rawEmail: String): Either[String, Email] =
+    parseEmail(rawEmail).fold((msg, _, _) => Left(msg), (email, _) => Right(email))
 
   private def ascii[_: P]: P[String] =
     P(CharPred(c => Charset.forName("US-ASCII").newEncoder.canEncode(c) && !"\"\\".contains(c))).!
@@ -50,8 +55,8 @@ object EmailParser {
     P(CharPred(_.isDigit) | CharIn("abcdefABCDEF")).rep(1).!
 
   private def ipv4[_: P]: P[String] =
-    P("IPv4:".? ~ octet ~ ("." ~ octet).rep(exactly=3)).!
+    P("IPv4:".? ~ octet ~ ("." ~ octet).rep(exactly = 3)).!
 
   private def ipv6[_: P]: P[String] =
-    P("IPv6:".? ~ hexadecimal.? ~ (":" ~ hexadecimal.?).rep(exactly=7)).!
+    P("IPv6:".? ~ hexadecimal.? ~ (":" ~ hexadecimal.?).rep(exactly = 7)).!
 }
