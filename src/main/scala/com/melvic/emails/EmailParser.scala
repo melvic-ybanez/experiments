@@ -20,20 +20,17 @@ object EmailParser {
     P("\"\\\" " ~ ascii).!
 
   def unquoted[_: P]: P[String] =
-    P(basicChars.rep(1) ~ ".".rep).rep.!
+    P(unquotedChar ~ ("." ~ unquotedChar).rep).rep(1).!
 
   def local[_: P]: P[String] =
-    P(quoted | unquoted).filter(_.length <= LocalMaxWidth)
-
-  def basicChars[_: P]: P[String] =
-    P(CharPred(_.isLetter) | CharPred(_.isDigit) | CharIn("!#$%&'*+-/=?^_`{|}~")).!
+    P(unquoted | quoted).filter(_.length <= LocalMaxWidth)
 
   def domain[_: P]: P[String] =
     P(label ~ ("." ~ label).rep).!.filter(_.length <= HostNameMaxWidth)
 
   def ipAddress[_: P]: P[String] = P("[" ~ (ipv4 | ipv6) ~ "]")
 
-  def email[_: P]: P[Email] = P(local ~ "@" ~ (domain | ipAddress) ~ End).map { case (local, domain) =>
+  def email[_: P]: P[Email] = P(Start ~ local ~ "@" ~ (domain | ipAddress) ~ End).map { case (local, domain) =>
     Email(local, domain)
   }
 
@@ -45,8 +42,17 @@ object EmailParser {
   private def ascii[_: P]: P[String] =
     P(CharPred(c => Charset.forName("US-ASCII").newEncoder.canEncode(c) && !"\"\\".contains(c))).!
 
+  private def letterOrDigit[_: P]: P[String] =
+    P(CharPred(_.isLetter) | CharPred(_.isDigit)).!
+
+  private def unquotedChar[_: P]: P[String] =
+    P(letterOrDigit | CharIn("!#$%&'*+\\-/=?^_`{|}~")).!
+
+  private def labelChar[_: P]: P[String] =
+    P(letterOrDigit | CharIn("!#$%&'*+/=?^`{|}~")).!
+
   private def label[_: P]: P[String] =
-    P(basicChars.filter(!_.contains("_")).rep(1) ~ "-".rep).rep(1).!.filter(_.length <= DnsLabelMaxWidth)
+    P(labelChar ~ ("-" ~ labelChar).rep).rep(1).!.filter(_.length <= DnsLabelMaxWidth)
 
   private def octet[_: P]: P[Int] =
     P(CharPred(_.isDigit)).rep(1).!.map(_.toInt).filter(x => x >= 0 && x <= 255)
