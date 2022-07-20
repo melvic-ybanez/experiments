@@ -13,6 +13,10 @@ object PhoneNumber {
         else Right(number)
       }
 
+  /**
+   * Obfuscates a phone number. Spaces are converted to dashes, and digits are converted to asterisks, except
+   * for the last four.
+   */
   def obfuscate(rawPhoneNumber: String): String =
     rawPhoneNumber
       .replace(" ", "-")

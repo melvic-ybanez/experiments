@@ -3,8 +3,6 @@ package com.melvic
 import com.melvic.emails.EmailParser
 import com.melvic.numbers.PhoneNumber
 
-sealed trait Obfuscation
-
 object Obfuscation {
   def of(input: String): Either[String, String] =
     EmailParser
